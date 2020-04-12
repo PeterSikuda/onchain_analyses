@@ -1,6 +1,5 @@
 import pandas as pd
 import coinmetrics as cm
-import pycoingecko as cg
 import requests
 import json
 import plotly.graph_objs as go
