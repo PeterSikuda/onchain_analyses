@@ -25,3 +25,4 @@ tornado==6.0.4
 traitlets==4.3.3
 wcwidth==0.1.9
 coinmetrics==0.2.4
+sanpy==0.7.18
