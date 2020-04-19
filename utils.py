@@ -6,11 +6,13 @@ import plotly.graph_objs as go
 import plotly.offline as po
 import datetime
 import time
-
+import san
 
 com = cm.Community()
 
 api = '041e6774-857f-4533-83ef-3baf35d1568e'
+
+projects = san.get("projects/all")
 
 
 def cm_metric(asset,metric,start_date):
@@ -74,8 +76,12 @@ def gn_TxTfrValMedNtv(asset,start_date):
     return df
 
 
-def plot_AdrActCnt_diff(asset,start_date):
+def plot_AdrActCnt_diff(asset,start_date,include_santiment=True):
     try:
+        if include_santiment:
+            slug = projects[projects['ticker']==asset].slug.tolist()[0]
+            san_data = san.get('daily_active_addresses/'+slug,from_date=start_date)
+            trace_san = go.Scatter(x=san_data.index,y=san_data['value'],name='Santiment',opacity=0.5)
         cm_aac = cm_metric(asset,'AdrActCnt',start_date)
         gn_aac = gn_AdrActCnt(asset,start_date)
         trace_cm = go.Scatter(x=cm_aac.index,y=cm_aac.AdrActCnt,name='Coinmetrics',opacity=0.5)
@@ -84,7 +90,11 @@ def plot_AdrActCnt_diff(asset,start_date):
         diff = go.Scatter(x=cm_aac.index,y=gn_cm_diff,yaxis='y2',name='Difference in %',opacity=0.5)
         layout = go.Layout(title='{} Active Addresses'.format(asset),template='plotly_white',yaxis2=dict(overlaying='y',side='right',tickformat='%'),
                           legend=dict(xanchor='left',yanchor='top',orientation='h',x=0,y=1.1),hovermode='x')
-        fig = go.Figure([trace_cm,trace_gn,diff],layout=layout)   
+        if include_santiment:
+            fig = go.Figure([trace_cm,trace_gn,trace_san,diff],layout=layout)
+        else:
+            fig = go.Figure([trace_cm,trace_gn,diff],layout=layout)
+
         return po.iplot(fig)
     
     except ValueError:
@@ -108,8 +118,12 @@ def plot_FeeTotNtv_diff(asset,start_date):
         return print('Total Network Fees for {} are not available in one of the sources. Please select coin from the available list above'.format(asset))
 
 
-def plot_TxTfrValAdjNtv_diff(asset,start_date):
+def plot_TxTfrValAdjNtv_diff(asset,start_date,include_santiment=True):
     try:
+        if include_santiment:
+            slug = projects[projects['ticker']==asset].slug.tolist()[0]
+            san_data = san.get('transaction_volume/'+slug,from_date=start_date)
+            trace_san = go.Scatter(x=san_data.index,y=san_data['value'],name='Santiment',opacity=0.5)
         cm = cm_metric(asset,'TxTfrValAdjNtv',start_date)
         gn = gn_TxTfrValAdjNtv(asset,start_date)
         trace_cm = go.Scatter(x=cm.index,y=cm.TxTfrValAdjNtv,name='Coinmetrics',opacity=0.5)
@@ -118,7 +132,10 @@ def plot_TxTfrValAdjNtv_diff(asset,start_date):
         diff = go.Scatter(x=cm.index,y=gn_cm_diff,yaxis='y2',name='Difference in %',opacity=0.5)
         layout = go.Layout(title='{} Transfer Volume (Total)'.format(asset),template='plotly_white',yaxis2=dict(overlaying='y',side='right',tickformat='%'),
                           legend=dict(xanchor='left',yanchor='top',orientation='h',x=0,y=1.1),hovermode='x')
-        fig = go.Figure([trace_cm,trace_gn,diff],layout=layout)
+        if include_santiment:
+            fig = go.Figure([trace_cm,trace_gn,trace_san,diff],layout=layout)
+        else:
+            fig = go.Figure([trace_cm,trace_gn,diff],layout=layout)
         return po.iplot(fig)
     except ValueError:
         return print('Transfer Volume (Total) {} are not available in one of the sources. Please select coin from the available list above'.format(asset))
